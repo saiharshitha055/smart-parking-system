@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Multi-Slot Parking Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef2f7;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 800px;
+    }
+    .card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .slot-name {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .status {
+      font-size: 1.5rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🚘 Smart Parking Status Dashboard</h1>
+  <div class="grid" id="slots-container">
+    <!-- Slot cards will be inserted here -->
+  </div>
+
+  <script>
+    const CHANNEL_ID = 'YOUR_CHANNEL_ID'; // Replace with your ThingSpeak Channel ID
+    const NUM_SLOTS = 3; // 🔁 Change this to how many slots you have
+
+    // Create slot cards
+    const container = document.getElementById('slots-container');
+    for (let i = 1; i <= NUM_SLOTS; i++) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="slot-name">Slot ${i}</div>
+        <div class="status" id="status-slot-${i}">Loading...</div>
+      `;
+      container.appendChild(card);
+    }
+
+    async function updateStatuses() {
+      for (let i = 1; i <= NUM_SLOTS; i++) {
+        try {
+          const res = await fetch(`https://api.thingspeak.com/channels/${CHANNEL_ID}/fields/${i}/last.json`);
+          const data = await res.json();
+          const value = parseInt(data[`field${i}`]);
+          const status = value === 1 ? "❌ Occupied" : "✅ Available";
+          document.getElementById(`status-slot-${i}`).textContent = status;
+        } catch (error) {
+          document.getElementById(`status-slot-${i}`).textContent = "⚠️ Error";
+        }
+      }
+    }
+
+    // Initial fetch + auto-refresh
+    updateStatuses();
+    setInterval(updateStatuses, 15000);
+  </script>
+
+</body>
+</html>
